@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, TrendingUp, User, MapPin, Briefcase, FileText, Circle } from 'lucide-react';
+import { X, CheckCircle, TrendingUp, User, MapPin, Briefcase, FileText, Circle, Award } from 'lucide-react';
 import { getUserCompletion, getUserGrades, getUserActivitiesCompletion, getCourseContents } from '../../api/moodle';
 import { MoodleUser } from '../../types';
 
@@ -48,7 +48,6 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
       setCompletion(completionData);
       setGrades(gradesData);
 
-      // Merge activities completion with course contents to get names
       const activitiesMap = new Map();
       contentsData.forEach((section: any) => {
         section.modules?.forEach((module: any) => {
@@ -98,6 +97,30 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
     };
     return types[modname] || modname;
   };
+
+  const getGradeStatus = (grade: any) => {
+    if (grade.graderaw !== null && grade.graderaw !== undefined) {
+      return 'graded';
+    }
+    if (grade.status === 'novalue') {
+      return 'novalue';
+    }
+    return 'pending';
+  };
+
+  const getGradeColor = (grade: any) => {
+    const status = getGradeStatus(grade);
+    if (status === 'graded') {
+      const percentage = (grade.graderaw / grade.grademax) * 100;
+      if (percentage >= 60) return 'bg-green-50 border-green-200';
+      if (percentage >= 40) return 'bg-yellow-50 border-yellow-200';
+      return 'bg-red-50 border-red-200';
+    }
+    return 'bg-gray-50 border-gray-200';
+  };
+
+  const courseGrade = grades.find(g => g.itemtype === 'course');
+  const itemGrades = grades.filter(g => g.itemtype !== 'course');
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -370,20 +393,92 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
-              ) : grades.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">Nessuna valutazione disponibile</p>
               ) : (
-                <div className="space-y-3">
-                  {grades.map((grade, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4">
+                <div className="space-y-4">
+                  {/* Voto Finale Corso */}
+                  {courseGrade && (
+                    <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-900">{grade.itemname || 'Valutazione'}</span>
-                        <span className="text-lg font-bold text-blue-600">
-                          {grade.graderaw ? `${grade.graderaw}/${grade.grademax}` : 'N/A'}
-                        </span>
+                        <div className="flex items-center space-x-3">
+                          <Award className="text-blue-600" size={24} />
+                          <div>
+                            <p className="text-sm font-medium text-gray-500">Voto Finale Corso</p>
+                            <p className="text-xs text-gray-400">Range: {courseGrade.grademin}–{courseGrade.grademax}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {courseGrade.graderaw !== null ? (
+                            <div>
+                              <p className="text-3xl font-bold text-blue-600">
+                                {courseGrade.graderaw}
+                              </p>
+                              <p className="text-sm text-gray-600">su {courseGrade.grademax}</p>
+                            </div>
+                          ) : (
+                            <span className="text-xl text-gray-400">Non valutato</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  ))}
+                  )}
+
+                  {/* Valutazioni Singole Attività */}
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Valutazioni Attività</h3>
+                  {itemGrades.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">Nessuna attività valutabile</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {itemGrades.map((grade, index) => (
+                        <div
+                          key={index}
+                          className={`rounded-lg p-4 border-2 transition-colors ${getGradeColor(grade)}`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2">
+                                <p className="font-medium text-gray-900">
+                                  {grade.itemname || 'Attività'}
+                                </p>
+                                <span className="text-xs text-gray-500 px-2 py-0.5 bg-gray-100 rounded">
+                                  {getModuleTypeLabel(grade.itemmodule)}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Range: {grade.grademin}–{grade.grademax}
+                              </p>
+                              {grade.feedback && (
+                                <p className="text-sm text-gray-600 mt-2 italic">
+                                  {grade.feedback}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right ml-4">
+                              {grade.graderaw !== null && grade.graderaw !== undefined ? (
+                                <div>
+                                  <p className="text-2xl font-bold text-gray-900">
+                                    {grade.graderaw}
+                                  </p>
+                                  <p className="text-sm text-gray-600">/ {grade.grademax}</p>
+                                  {grade.percentageformatted && grade.percentageformatted !== '-' && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      ({grade.percentageformatted})
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <div>
+                                  <p className="text-lg text-gray-400">N/A</p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {grade.status === 'novalue' ? 'Non valutato' : 'In attesa'}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -66,3 +66,33 @@ export const getCourseContents = async (instanceId: number, courseId: number) =>
   const response = await apiClient.get(`/api/v1/instances/${instanceId}/courses/${courseId}/contents`);
   return response.data;
 };
+
+export const getCourseCustomReport = async (instanceId: number, courseId: number) => {
+  const response = await apiClient.get(`/api/v1/instances/${instanceId}/courses/${courseId}/report`);
+  return response.data;
+};
+
+// Course Reports Management
+export const getCourseReports = async (instanceId: number) => {
+  const response = await apiClient.get(`/api/v1/course-reports/${instanceId}`);
+  return response.data;
+};
+
+export const getCourseReport = async (instanceId: number, courseId: number) => {
+  const response = await apiClient.get(`/api/v1/course-reports/${instanceId}/${courseId}`);
+  return response.data;
+};
+
+export const createCourseReport = async (instanceId: number, data: any) => {
+  const response = await apiClient.post(`/api/v1/course-reports/${instanceId}`, data);
+  return response.data;
+};
+
+export const updateCourseReport = async (instanceId: number, courseId: number, data: any) => {
+  const response = await apiClient.put(`/api/v1/course-reports/${instanceId}/${courseId}`, data);
+  return response.data;
+};
+
+export const deleteCourseReport = async (instanceId: number, courseId: number) => {
+  await apiClient.delete(`/api/v1/course-reports/${instanceId}/${courseId}`);
+};

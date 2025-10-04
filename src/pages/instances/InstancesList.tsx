@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Server, AlertCircle } from 'lucide-react';
 import { getMoodleInstances } from '../../api/moodle';
 import { MoodleInstance } from '../../types';
+import { CreateInstanceModal } from '../../components/moodle/CreateInstanceModal';
 
 export const InstancesList: React.FC = () => {
   const navigate = useNavigate();
   const [instances, setInstances] = useState<MoodleInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     loadInstances();
@@ -27,6 +29,10 @@ export const InstancesList: React.FC = () => {
     }
   };
 
+  const handleCreateSuccess = () => {
+    loadInstances();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -40,7 +46,7 @@ export const InstancesList: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Istanze Moodle</h1>
         <button
-          onClick={() => navigate('/instances/new')}
+          onClick={() => setShowCreateModal(true)}
           className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus size={20} />
@@ -99,13 +105,20 @@ export const InstancesList: React.FC = () => {
           <h3 className="text-lg font-medium text-gray-900 mb-2">Nessuna istanza</h3>
           <p className="text-gray-500 mb-4">Inizia aggiungendo la tua prima istanza Moodle</p>
           <button
-            onClick={() => navigate('/instances/new')}
+            onClick={() => setShowCreateModal(true)}
             className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             <Plus size={20} />
             <span>Aggiungi Istanza</span>
           </button>
         </div>
+      )}
+
+      {showCreateModal && (
+        <CreateInstanceModal
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={handleCreateSuccess}
+        />
       )}
     </div>
   );

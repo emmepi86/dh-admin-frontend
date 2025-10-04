@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Server, RefreshCw, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Server, RefreshCw, AlertCircle, Settings } from 'lucide-react';
 import { getMoodleInstance, getInstanceCourses } from '../../api/moodle';
 import { MoodleInstance, MoodleCourse } from '../../types';
+import { EditInstanceModal } from '../../components/moodle/EditInstanceModal';
 
 export const InstanceDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -11,6 +12,7 @@ export const InstanceDetail: React.FC = () => {
   const [courses, setCourses] = useState<MoodleCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -34,6 +36,10 @@ export const InstanceDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteSuccess = () => {
+    navigate('/'); // Torna alla lista dopo eliminazione
   };
 
   if (loading) {
@@ -104,6 +110,16 @@ export const InstanceDetail: React.FC = () => {
             </div>
           )}
         </div>
+
+        <div className="mt-4">
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+          >
+            <Settings size={18} />
+            <span>Modifica Istanza</span>
+          </button>
+        </div>
       </div>
 
       {/* Courses List */}
@@ -147,6 +163,15 @@ export const InstanceDetail: React.FC = () => {
           </div>
         )}
       </div>
+
+      {showEditModal && instance && (
+        <EditInstanceModal
+          instance={instance}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={loadInstanceData}
+          onDelete={handleDeleteSuccess}
+        />
+      )}
     </div>
   );
 };
